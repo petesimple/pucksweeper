@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>PuckSweeper</title>
+  <meta name="theme-color" content="#0b3ea8" />
+  <style>
+    :root{
+      --bg:#07142d;
+      --table:#0b3ea8;
+      --table2:#0a3796;
+      --rail:#bfc5ce;
+      --rail2:#9aa2ad;
+      --line:#0a2b72;
+      --text:#eaf2ff;
+      --muted:#c8d3ea;
+
+      --puck-yellow:#ffd400;
+      --puck-red:#ff2a2a;
+      --puck-green:#39ff14;
+
+      --tile:#1d4fb9;
+      --tile2:#1946a3;
+      --shadow: rgba(0,0,0,.35);
+
+      --px: 2px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(255,255,255,.10), rgba(255,255,255,0) 40%),
+        radial-gradient(circle at 80% 30%, rgba(255,255,255,.08), rgba(255,255,255,0) 45%),
+        linear-gradient(180deg, var(--bg), #050b16);
+      color: var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+
+    .wrap{
+      width:min(980px, 100%);
+      display:grid;
+      gap:14px;
+    }
+
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .title{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+    }
+    .title h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:1px;
+      text-shadow: 0 2px 0 rgba(0,0,0,.35);
+    }
+    .title .tag{
+      font-size:12px;
+      color: var(--muted);
+      opacity:.95;
+    }
+
+    .panel{
+      background: rgba(255,255,255,.06);
+      border: var(--px) solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 25px var(--shadow);
+      border-radius: 12px;
+      padding:12px;
+    }
+
+    .hud{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .hud-left, .hud-right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .meter{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius: 10px;
+      background: rgba(0,0,0,.20);
+      border: var(--px) solid rgba(255,255,255,.10);
+      min-width: 155px;
+    }
+    .meter .label{
+      font-size:11px;
+      color: var(--muted);
+    }
+    .meter .value{
+      font-size:16px;
+      letter-spacing:1px;
+    }
+
+    button, select{
+      appearance:none;
+      border:none;
+      font: inherit;
+      color: var(--text);
+      background: rgba(0,0,0,.22);
+      border: var(--px) solid rgba(255,255,255,.16);
+      border-radius: 10px;
+      padding:10px 12px;
+      cursor:pointer;
+      transition: transform .06s ease;
+    }
+    button:active{ transform: translateY(1px); }
+    select{ padding-right: 34px; }
+    .btn{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight:700;
+      letter-spacing:1px;
+    }
+    .btn small{
+      font-weight:400;
+      letter-spacing:0;
+      opacity:.85;
+    }
+
+    .table{
+      position:relative;
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 6px, rgba(255,255,255,0) 6px 12px),
+        linear-gradient(180deg, var(--table), var(--table2));
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 18px 50px var(--shadow);
+      border: var(--px) solid rgba(255,255,255,.14);
+    }
+
+    .rails{
+      background: linear-gradient(180deg, var(--rail), var(--rail2));
+      border-radius: 14px;
+      padding: 14px;
+      border: var(--px) solid rgba(0,0,0,.20);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,.25);
+    }
+
+    .grid{
+      display:grid;
+      gap:6px;
+      user-select:none;
+      touch-action: manipulation;
+      background: rgba(0,0,0,.10);
+      border-radius: 12px;
+      padding: 10px;
+      border: var(--px) solid rgba(0,0,0,.18);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,.10);
+      justify-content:center;
+    }
+
+    .tile{
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display:grid;
+      place-items:center;
+      position:relative;
+
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.20), rgba(255,255,255,0) 45%),
+                  linear-gradient(180deg, var(--tile), var(--tile2));
+      border: var(--px) solid rgba(0,0,0,.22);
+      box-shadow: 0 2px 0 rgba(0,0,0,.25);
+      cursor:pointer;
+    }
+
+    .tile:focus{ outline: none; }
+    .tile.revealed{
+      cursor: default;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(255,255,255,0) 45%),
+                  linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.06));
+      border-color: rgba(0,0,0,.20);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,.14);
+    }
+
+    .tile.flagged::after{
+      content:"F";
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      font-weight:900;
+      font-size:16px;
+      color:#ffef7a;
+      text-shadow: 0 2px 0 rgba(0,0,0,.35);
+    }
+
+    .puck{
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: var(--px) solid rgba(0,0,0,.25);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,.18);
+      display:grid;
+      place-items:center;
+      font-size: 14px;
+      font-weight: 900;
+      line-height:1;
+      color: rgba(0,0,0,.70);
+      text-shadow: 0 1px 0 rgba(255,255,255,.25);
+    }
+
+    .puck.yellow{ background: var(--puck-yellow); }
+    .puck.red{ background: var(--puck-red); color: rgba(255,255,255,.92); text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+    .puck.green{ background: var(--puck-green); }
+
+    .mallet{
+      width: 22px;
+      height: 22px;
+      position:relative;
+      border-radius: 6px;
+      background: #2b2f36;
+      border: var(--px) solid rgba(0,0,0,.35);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,.10);
+    }
+    .mallet::before{
+      content:"";
+      position:absolute;
+      width: 6px;
+      height: 16px;
+      left: 8px;
+      top: -10px;
+      border-radius: 3px;
+      background: #c18a3a;
+      border: var(--px) solid rgba(0,0,0,.25);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,.12);
+    }
+
+    .legend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      font-size:12px;
+      color: var(--muted);
+    }
+    .legend .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .chip{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.20);
+      border: var(--px) solid rgba(255,255,255,.12);
+      white-space:nowrap;
+    }
+    .dot{
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: var(--px) solid rgba(0,0,0,.25);
+    }
+    .dot.yellow{ background: var(--puck-yellow); }
+    .dot.red{ background: var(--puck-red); }
+    .dot.green{ background: var(--puck-green); }
+
+    .msg{
+      font-size: 13px;
+      color: var(--text);
+      opacity:.95;
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.65);
+      border: var(--px) solid rgba(255,255,255,.16);
+      padding: 10px 12px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+      font-size: 12px;
+      color: var(--text);
+      max-width: min(640px, calc(100% - 24px));
+      display:none;
+    }
+    .toast.show{ display:block; }
+
+    @media (max-width: 480px){
+      .tile{ width: 28px; height:28px; }
+      .puck, .mallet{ width: 20px; height:20px; }
+      .puck{ font-size: 13px; }
+      .mallet::before{ left:7px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>PUCKSWEEPER</h1>
+        <div class="tag">8bit air hockey minesweeper</div>
+      </div>
+      <div class="msg" id="statusMsg">Left click clears. Right click flags. Long press flags on mobile.</div>
+    </div>
+
+    <div class="panel">
+      <div class="hud">
+        <div class="hud-left">
+          <div class="meter" title="Mallets remaining (flags) - like classic minesweeper">
+            <div>
+              <div class="label">MALLETS LEFT</div>
+              <div class="value" id="malletsLeft">000</div>
+            </div>
+          </div>
+          <div class="meter" title="Time">
+            <div>
+              <div class="label">TIME</div>
+              <div class="value" id="timeVal">000</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hud-right">
+          <select id="difficulty" title="Difficulty">
+            <option value="beginner">Bar Table (9x9, 10 mallets)</option>
+            <option value="intermediate">Tournament Table (16x16, 40 mallets)</option>
+            <option value="expert">Worlds Table (30x16, 99 mallets)</option>
+          </select>
+          <button class="btn" id="newBtn" title="New game">
+            NEW
+            <small id="face">:)</small>
+          </button>
+        </div>
+      </div>
+
+      <div class="legend" style="margin-top:10px;">
+        <div class="chips">
+          <div class="chip"><span class="dot yellow"></span>Yellow puck = 1 to 2</div>
+          <div class="chip"><span class="dot red"></span>Red puck = 3 to 4</div>
+          <div class="chip"><span class="dot green"></span>Neon green puck = 5 to 8</div>
+        </div>
+        <div class="chips">
+          <div class="chip">Tip: double click a revealed puck to chord (auto clear neighbors when flags match)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table">
+      <div class="rails">
+        <div class="grid" id="grid" aria-label="PuckSweeper grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const gridEl = document.getElementById("grid");
+  const malletsLeftEl = document.getElementById("malletsLeft");
+  const timeEl = document.getElementById("timeVal");
+  const difficultyEl = document.getElementById("difficulty");
+  const newBtn = document.getElementById("newBtn");
+  const faceEl = document.getElementById("face");
+  const statusMsg = document.getElementById("statusMsg");
+  const toastEl = document.getElementById("toast");
+
+  const DIFFS = {
+    beginner: { w: 9, h: 9, m: 10 },
+    intermediate: { w: 16, h: 16, m: 40 },
+    expert: { w: 30, h: 16, m: 99 }
+  };
+
+  let W = 9, H = 9, MALLETS = 10;
+  let cells = [];
+  let started = false;
+  let gameOver = false;
+  let flags = 0;
+  let revealedCount = 0;
+  let timer = null;
+  let t = 0;
+  let firstClickIndex = null;
+
+  function pad3(n){
+    n = Math.max(0, n|0);
+    return String(n).padStart(3, "0");
+  }
+
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 1600);
+  }
+
+  function idx(x,y){ return y*W + x; }
+  function inb(x,y){ return x>=0 && y>=0 && x<W && y<H; }
+
+  function neighbors(x,y){
+    const out = [];
+    for(let dy=-1; dy<=1; dy++){
+      for(let dx=-1; dx<=1; dx++){
+        if(dx===0 && dy===0) continue;
+        const nx = x+dx, ny = y+dy;
+        if(inb(nx,ny)) out.push(idx(nx,ny));
+      }
+    }
+    return out;
+  }
+
+  function resetTimer(){
+    if(timer) clearInterval(timer);
+    timer = null;
+    t = 0;
+    timeEl.textContent = pad3(t);
+  }
+
+  function startTimer(){
+    if(timer) return;
+    timer = setInterval(() => {
+      t++;
+      timeEl.textContent = pad3(t);
+    }, 1000);
+  }
+
+  function setFace(sym){
+    faceEl.textContent = sym;
+  }
+
+  function updateMalletsLeft(){
+    const left = MALLETS - flags;
+    malletsLeftEl.textContent = pad3(left);
+  }
+
+  function setStatus(msg){
+    statusMsg.textContent = msg;
+  }
+
+  function buildEmpty(){
+    cells = new Array(W*H).fill(0).map((_, i) => ({
+      i,
+      x: i % W,
+      y: Math.floor(i / W),
+      mallet: false,
+      n: 0,
+      revealed: false,
+      flagged: false,
+      el: null
+    }));
+  }
+
+  function placeMalletsAvoiding(firstIndex){
+    // Place mallets after first click so first tile is never a mallet
+    const forbidden = new Set([firstIndex, ...neighbors(cells[firstIndex].x, cells[firstIndex].y)]);
+    let placed = 0;
+
+    const candidates = [];
+    for(let i=0;i<cells.length;i++){
+      if(!forbidden.has(i)) candidates.push(i);
+    }
+
+    // Shuffle candidates
+    for(let i=candidates.length-1;i>0;i--){
+      const j = (Math.random() * (i+1))|0;
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    }
+
+    for(const i of candidates){
+      if(placed >= MALLETS) break;
+      cells[i].mallet = true;
+      placed++;
+    }
+
+    // Fallback if board too small (should not happen with our presets)
+    while(placed < MALLETS){
+      const i = (Math.random() * cells.length)|0;
+      if(forbidden.has(i)) continue;
+      if(cells[i].mallet) continue;
+      cells[i].mallet = true;
+      placed++;
+    }
+  }
+
+  function computeNumbers(){
+    for(const c of cells){
+      if(c.mallet){ c.n = -1; continue; }
+      const ns = neighbors(c.x, c.y);
+      let count = 0;
+      for(const ni of ns) if(cells[ni].mallet) count++;
+      c.n = count;
+    }
+  }
+
+  function puckClassFor(n){
+    if(n <= 0) return null;
+    if(n <= 2) return "yellow";
+    if(n <= 4) return "red";
+    return "green";
+  }
+
+  function render(){
+    gridEl.innerHTML = "";
+    gridEl.style.gridTemplateColumns = `repeat(${W}, 30px)`;
+    gridEl.style.gridTemplateRows = `repeat(${H}, 30px)`;
+
+    for(const c of cells){
+      const b = document.createElement("button");
+      b.className = "tile";
+      b.setAttribute("type","button");
+      b.setAttribute("aria-label", `Tile ${c.x+1},${c.y+1}`);
+      b.dataset.i = c.i;
+
+      // Left click
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        onReveal(c.i);
+      });
+
+      // Right click flag
+      b.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        onFlag(c.i);
+      });
+
+      // Double click chord
+      b.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        onChord(c.i);
+      });
+
+      // Long press to flag (mobile)
+      let lpTimer = null;
+      b.addEventListener("touchstart", () => {
+        if(gameOver) return;
+        lpTimer = setTimeout(() => onFlag(c.i), 420);
+      }, {passive:true});
+      b.addEventListener("touchend", () => {
+        if(lpTimer) clearTimeout(lpTimer);
+        lpTimer = null;
+      }, {passive:true});
+      b.addEventListener("touchmove", () => {
+        if(lpTimer) clearTimeout(lpTimer);
+        lpTimer = null;
+      }, {passive:true});
+
+      c.el = b;
+      gridEl.appendChild(b);
+      paintCell(c);
+    }
+  }
+
+  function paintCell(c){
+    const el = c.el;
+    if(!el) return;
+
+    el.classList.toggle("revealed", c.revealed);
+    el.classList.toggle("flagged", c.flagged);
+
+    if(!c.revealed){
+      el.innerHTML = "";
+      return;
+    }
+
+    // Revealed
+    if(c.mallet){
+      el.innerHTML = `<div class="mallet" aria-hidden="true"></div>`;
+      return;
+    }
+
+    if(c.n === 0){
+      el.innerHTML = "";
+      return;
+    }
+
+    const cls = puckClassFor(c.n);
+    const num = c.n; // keep classic clarity
+    el.innerHTML = `<div class="puck ${cls}" aria-hidden="true">${num}</div>`;
+  }
+
+  function revealAllMallets(){
+    for(const c of cells){
+      if(c.mallet){
+        c.revealed = true;
+        paintCell(c);
+      }
+    }
+  }
+
+  function endGame(win){
+    gameOver = true;
+    if(timer) clearInterval(timer);
+    timer = null;
+
+    if(win){
+      setFace("B)");
+      setStatus(`Clean sweep - you found all the mallets in ${t}s`);
+      toast("PLAY PUCK - you win");
+    }else{
+      setFace("X(");
+      setStatus("Clack - you hit a mallet");
+      toast("Malleted");
+      revealAllMallets();
+    }
+  }
+
+  function tryWin(){
+    const safeTotal = W*H - MALLETS;
+    if(revealedCount >= safeTotal){
+      // Auto flag remaining mallets
+      for(const c of cells){
+        if(c.mallet && !c.flagged){
+          c.flagged = true;
+          flags++;
+          paintCell(c);
+        }
+      }
+      updateMalletsLeft();
+      endGame(true);
+    }
+  }
+
+  function onFirstAction(i){
+    if(started) return;
+    started = true;
+    firstClickIndex = i;
+    placeMalletsAvoiding(i);
+    computeNumbers();
+    startTimer();
+  }
+
+  function onReveal(i){
+    if(gameOver) return;
+    const c = cells[i];
+    if(c.revealed || c.flagged) return;
+
+    onFirstAction(i);
+
+    if(c.mallet){
+      c.revealed = true;
+      paintCell(c);
+      endGame(false);
+      return;
+    }
+
+    floodReveal(i);
+    tryWin();
+  }
+
+  function floodReveal(i){
+    const stack = [i];
+    while(stack.length){
+      const ci = stack.pop();
+      const c = cells[ci];
+      if(c.revealed || c.flagged) continue;
+      c.revealed = true;
+      revealedCount++;
+      paintCell(c);
+
+      if(c.n === 0){
+        const ns = neighbors(c.x, c.y);
+        for(const ni of ns){
+          const ncell = cells[ni];
+          if(!ncell.revealed && !ncell.flagged && !ncell.mallet){
+            stack.push(ni);
+          }
+        }
+      }
+    }
+  }
+
+  function onFlag(i){
+    if(gameOver) return;
+    const c = cells[i];
+    if(c.revealed) return;
+
+    if(!started){
+      // allow flagging before first reveal, classic behavior
+      started = true;
+      firstClickIndex = i;
+      placeMalletsAvoiding(i);
+      computeNumbers();
+      startTimer();
+    }
+
+    c.flagged = !c.flagged;
+    flags += c.flagged ? 1 : -1;
+    paintCell(c);
+    updateMalletsLeft();
+    tryWin();
+  }
+
+  function onChord(i){
+    if(gameOver) return;
+    const c = cells[i];
+    if(!c.revealed) return;
+    if(c.n <= 0) return;
+
+    const ns = neighbors(c.x, c.y);
+    let flaggedAround = 0;
+    for(const ni of ns) if(cells[ni].flagged) flaggedAround++;
+
+    if(flaggedAround !== c.n) return;
+
+    // reveal all unflagged neighbors
+    for(const ni of ns){
+      const ncell = cells[ni];
+      if(ncell.flagged || ncell.revealed) continue;
+
+      if(ncell.mallet){
+        ncell.revealed = true;
+        paintCell(ncell);
+        endGame(false);
+        return;
+      }
+      floodReveal(ni);
+    }
+    tryWin();
+  }
+
+  function newGame(){
+    const diff = DIFFS[difficultyEl.value] || DIFFS.beginner;
+    W = diff.w; H = diff.h; MALLETS = diff.m;
+
+    started = false;
+    gameOver = false;
+    flags = 0;
+    revealedCount = 0;
+    firstClickIndex = null;
+    resetTimer();
+    setFace(":)");
+    setStatus("Left click clears. Right click flags. Long press flags on mobile.");
+
+    buildEmpty();
+    updateMalletsLeft();
+    render();
+    toast("New table ready");
+  }
+
+  // Keyboard help
+  window.addEventListener("keydown", (e) => {
+    if(e.key.toLowerCase() === "n"){
+      newGame();
+    }
+  });
+
+  newBtn.addEventListener("click", newGame);
+  difficultyEl.addEventListener("change", newGame);
+
+  // Start
+  newGame();
+})();
+</script>
+</body>
+</html>
