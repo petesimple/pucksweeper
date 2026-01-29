@@ -12,7 +12,6 @@
       --table2:#0a3796;
       --rail:#bfc5ce;
       --rail2:#9aa2ad;
-      --line:#0a2b72;
       --text:#eaf2ff;
       --muted:#c8d3ea;
 
@@ -22,12 +21,18 @@
 
       --tile:#1d4fb9;
       --tile2:#1946a3;
-      --shadow: rgba(0,0,0,.35);
 
+      --shadow: rgba(0,0,0,.35);
       --px: 2px;
+
+      /* responsive sizing knobs */
+      --gap: 6px;
+      --gridPad: 10px;
+      --tileSize: 30px; /* JS will override */
     }
 
     *{ box-sizing:border-box; }
+
     body{
       margin:0;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -40,13 +45,14 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:16px;
+      padding:14px;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .wrap{
       width:min(980px, 100%);
       display:grid;
-      gap:14px;
+      gap:12px;
     }
 
     .topbar{
@@ -54,7 +60,7 @@
       flex-wrap:wrap;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
+      gap:10px;
     }
 
     .title{
@@ -105,7 +111,7 @@
       border-radius: 10px;
       background: rgba(0,0,0,.20);
       border: var(--px) solid rgba(255,255,255,.10);
-      min-width: 155px;
+      min-width: 150px;
     }
     .meter .label{
       font-size:11px;
@@ -126,10 +132,12 @@
       border-radius: 10px;
       padding:10px 12px;
       cursor:pointer;
-      transition: transform .06s ease;
+      transition: transform .06s ease, filter .12s ease;
+      touch-action: manipulation;
     }
     button:active{ transform: translateY(1px); }
     select{ padding-right: 34px; }
+
     .btn{
       display:flex;
       align-items:center;
@@ -143,13 +151,18 @@
       opacity:.85;
     }
 
+    .btn.flag-on{
+      filter: brightness(1.2);
+      box-shadow: inset 0 0 0 999px rgba(255,255,255,.06);
+    }
+
     .table{
       position:relative;
       background:
         repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 6px, rgba(255,255,255,0) 6px 12px),
         linear-gradient(180deg, var(--table), var(--table2));
       border-radius: 16px;
-      padding: 14px;
+      padding: 12px;
       box-shadow: 0 18px 50px var(--shadow);
       border: var(--px) solid rgba(255,255,255,.14);
     }
@@ -157,44 +170,46 @@
     .rails{
       background: linear-gradient(180deg, var(--rail), var(--rail2));
       border-radius: 14px;
-      padding: 14px;
+      padding: 12px;
       border: var(--px) solid rgba(0,0,0,.20);
       box-shadow: inset 0 2px 0 rgba(255,255,255,.25);
     }
 
     .grid{
       display:grid;
-      gap:6px;
+      gap: var(--gap);
       user-select:none;
       touch-action: manipulation;
       background: rgba(0,0,0,.10);
       border-radius: 12px;
-      padding: 10px;
+      padding: var(--gridPad);
       border: var(--px) solid rgba(0,0,0,.18);
       box-shadow: inset 0 2px 0 rgba(255,255,255,.10);
       justify-content:center;
+      max-width: 100%;
+      overflow: hidden;
     }
 
     .tile{
-      width: 30px;
-      height: 30px;
+      width: var(--tileSize);
+      height: var(--tileSize);
       border-radius: 999px;
       display:grid;
       place-items:center;
       position:relative;
+      padding:0;
 
       background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.20), rgba(255,255,255,0) 45%),
-                  linear-gradient(180deg, var(--tile), var(--tile2));
+                linear-gradient(180deg, var(--tile), var(--tile2));
       border: var(--px) solid rgba(0,0,0,.22);
       box-shadow: 0 2px 0 rgba(0,0,0,.25);
       cursor:pointer;
     }
 
-    .tile:focus{ outline: none; }
     .tile.revealed{
       cursor: default;
       background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(255,255,255,0) 45%),
-                  linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.06));
+                linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.06));
       border-color: rgba(0,0,0,.20);
       box-shadow: inset 0 2px 0 rgba(255,255,255,.14);
     }
@@ -206,20 +221,20 @@
       display:grid;
       place-items:center;
       font-weight:900;
-      font-size:16px;
+      font-size: calc(var(--tileSize) * 0.55);
       color:#ffef7a;
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
     }
 
     .puck{
-      width: 22px;
-      height: 22px;
+      width: calc(var(--tileSize) * 0.74);
+      height: calc(var(--tileSize) * 0.74);
       border-radius: 999px;
       border: var(--px) solid rgba(0,0,0,.25);
       box-shadow: inset 0 2px 0 rgba(255,255,255,.18);
       display:grid;
       place-items:center;
-      font-size: 14px;
+      font-size: calc(var(--tileSize) * 0.48);
       font-weight: 900;
       line-height:1;
       color: rgba(0,0,0,.70);
@@ -227,12 +242,16 @@
     }
 
     .puck.yellow{ background: var(--puck-yellow); }
-    .puck.red{ background: var(--puck-red); color: rgba(255,255,255,.92); text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+    .puck.red{
+      background: var(--puck-red);
+      color: rgba(255,255,255,.92);
+      text-shadow: 0 2px 0 rgba(0,0,0,.35);
+    }
     .puck.green{ background: var(--puck-green); }
 
     .mallet{
-      width: 22px;
-      height: 22px;
+      width: calc(var(--tileSize) * 0.74);
+      height: calc(var(--tileSize) * 0.74);
       position:relative;
       border-radius: 6px;
       background: #2b2f36;
@@ -242,10 +261,10 @@
     .mallet::before{
       content:"";
       position:absolute;
-      width: 6px;
-      height: 16px;
-      left: 8px;
-      top: -10px;
+      width: calc(var(--tileSize) * 0.20);
+      height: calc(var(--tileSize) * 0.55);
+      left: calc(50% - (var(--tileSize) * 0.10));
+      top: calc(var(--tileSize) * -0.40);
       border-radius: 3px;
       background: #c18a3a;
       border: var(--px) solid rgba(0,0,0,.25);
@@ -260,6 +279,7 @@
       justify-content:space-between;
       font-size:12px;
       color: var(--muted);
+      margin-top:10px;
     }
     .legend .chips{
       display:flex;
@@ -310,11 +330,9 @@
     }
     .toast.show{ display:block; }
 
-    @media (max-width: 480px){
-      .tile{ width: 28px; height:28px; }
-      .puck, .mallet{ width: 20px; height:20px; }
-      .puck{ font-size: 13px; }
-      .mallet::before{ left:7px; }
+    @media (max-width: 520px){
+      .meter{ min-width: 140px; }
+      .title h1{ font-size: 20px; }
     }
   </style>
 </head>
@@ -325,7 +343,7 @@
         <h1>PUCKSWEEPER</h1>
         <div class="tag">8bit air hockey minesweeper</div>
       </div>
-      <div class="msg" id="statusMsg">Left click clears. Right click flags. Long press flags on mobile.</div>
+      <div class="msg" id="statusMsg">Tap to clear. Use FLAG for mallets. Double tap a revealed puck to chord.</div>
     </div>
 
     <div class="panel">
@@ -351,6 +369,12 @@
             <option value="intermediate">Tournament Table (16x16, 40 mallets)</option>
             <option value="expert">Worlds Table (30x16, 99 mallets)</option>
           </select>
+
+          <button class="btn" id="flagBtn" title="Toggle flag mode">
+            FLAG
+            <small id="flagState">OFF</small>
+          </button>
+
           <button class="btn" id="newBtn" title="New game">
             NEW
             <small id="face">:)</small>
@@ -358,14 +382,15 @@
         </div>
       </div>
 
-      <div class="legend" style="margin-top:10px;">
+      <div class="legend">
         <div class="chips">
           <div class="chip"><span class="dot yellow"></span>Yellow puck = 1 to 2</div>
           <div class="chip"><span class="dot red"></span>Red puck = 3 to 4</div>
           <div class="chip"><span class="dot green"></span>Neon green puck = 5 to 8</div>
         </div>
         <div class="chips">
-          <div class="chip">Tip: double click a revealed puck to chord (auto clear neighbors when flags match)</div>
+          <div class="chip">Desktop: right click flags</div>
+          <div class="chip">Mobile: FLAG mode or long press flags</div>
         </div>
       </div>
     </div>
@@ -379,401 +404,430 @@
 
   <div class="toast" id="toast"></div>
 
-<script>
-(() => {
-  const gridEl = document.getElementById("grid");
-  const malletsLeftEl = document.getElementById("malletsLeft");
-  const timeEl = document.getElementById("timeVal");
-  const difficultyEl = document.getElementById("difficulty");
-  const newBtn = document.getElementById("newBtn");
-  const faceEl = document.getElementById("face");
-  const statusMsg = document.getElementById("statusMsg");
-  const toastEl = document.getElementById("toast");
+  <script>
+  (() => {
+    const gridEl = document.getElementById("grid");
+    const malletsLeftEl = document.getElementById("malletsLeft");
+    const timeEl = document.getElementById("timeVal");
+    const difficultyEl = document.getElementById("difficulty");
+    const newBtn = document.getElementById("newBtn");
+    const faceEl = document.getElementById("face");
+    const statusMsg = document.getElementById("statusMsg");
+    const toastEl = document.getElementById("toast");
 
-  const DIFFS = {
-    beginner: { w: 9, h: 9, m: 10 },
-    intermediate: { w: 16, h: 16, m: 40 },
-    expert: { w: 30, h: 16, m: 99 }
-  };
+    const flagBtn = document.getElementById("flagBtn");
+    const flagState = document.getElementById("flagState");
 
-  let W = 9, H = 9, MALLETS = 10;
-  let cells = [];
-  let started = false;
-  let gameOver = false;
-  let flags = 0;
-  let revealedCount = 0;
-  let timer = null;
-  let t = 0;
-  let firstClickIndex = null;
+    const DIFFS = {
+      beginner: { w: 9, h: 9, m: 10 },
+      intermediate: { w: 16, h: 16, m: 40 },
+      expert: { w: 30, h: 16, m: 99 }
+    };
 
-  function pad3(n){
-    n = Math.max(0, n|0);
-    return String(n).padStart(3, "0");
-  }
+    let W = 9, H = 9, MALLETS = 10;
+    let cells = [];
+    let started = false;
+    let gameOver = false;
+    let flags = 0;
+    let revealedCount = 0;
+    let timer = null;
+    let t = 0;
+    let flagMode = false;
 
-  function toast(msg){
-    toastEl.textContent = msg;
-    toastEl.classList.add("show");
-    clearTimeout(toastEl._t);
-    toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 1600);
-  }
+    function pad3(n){
+      n = Math.max(0, n|0);
+      return String(n).padStart(3, "0");
+    }
 
-  function idx(x,y){ return y*W + x; }
-  function inb(x,y){ return x>=0 && y>=0 && x<W && y<H; }
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(toastEl._t);
+      toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 1500);
+    }
 
-  function neighbors(x,y){
-    const out = [];
-    for(let dy=-1; dy<=1; dy++){
-      for(let dx=-1; dx<=1; dx++){
-        if(dx===0 && dy===0) continue;
-        const nx = x+dx, ny = y+dy;
-        if(inb(nx,ny)) out.push(idx(nx,ny));
+    function idx(x,y){ return y*W + x; }
+    function inb(x,y){ return x>=0 && y>=0 && x<W && y<H; }
+
+    function neighbors(x,y){
+      const out = [];
+      for(let dy=-1; dy<=1; dy++){
+        for(let dx=-1; dx<=1; dx++){
+          if(dx===0 && dy===0) continue;
+          const nx = x+dx, ny = y+dy;
+          if(inb(nx,ny)) out.push(idx(nx,ny));
+        }
+      }
+      return out;
+    }
+
+    function resetTimer(){
+      if(timer) clearInterval(timer);
+      timer = null;
+      t = 0;
+      timeEl.textContent = pad3(t);
+    }
+
+    function startTimer(){
+      if(timer) return;
+      timer = setInterval(() => {
+        t++;
+        timeEl.textContent = pad3(t);
+      }, 1000);
+    }
+
+    function setFace(sym){
+      faceEl.textContent = sym;
+    }
+
+    function updateMalletsLeft(){
+      const left = MALLETS - flags;
+      malletsLeftEl.textContent = pad3(left);
+    }
+
+    function setStatus(msg){
+      statusMsg.textContent = msg;
+    }
+
+    function buildEmpty(){
+      cells = new Array(W*H).fill(0).map((_, i) => ({
+        i,
+        x: i % W,
+        y: Math.floor(i / W),
+        mallet: false,
+        n: 0,
+        revealed: false,
+        flagged: false,
+        el: null
+      }));
+    }
+
+    function placeMalletsAvoiding(firstIndex){
+      const forbidden = new Set([firstIndex, ...neighbors(cells[firstIndex].x, cells[firstIndex].y)]);
+      let placed = 0;
+
+      const candidates = [];
+      for(let i=0;i<cells.length;i++){
+        if(!forbidden.has(i)) candidates.push(i);
+      }
+
+      for(let i=candidates.length-1;i>0;i--){
+        const j = (Math.random() * (i+1))|0;
+        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+      }
+
+      for(const i of candidates){
+        if(placed >= MALLETS) break;
+        cells[i].mallet = true;
+        placed++;
+      }
+
+      while(placed < MALLETS){
+        const i = (Math.random() * cells.length)|0;
+        if(forbidden.has(i)) continue;
+        if(cells[i].mallet) continue;
+        cells[i].mallet = true;
+        placed++;
       }
     }
-    return out;
-  }
 
-  function resetTimer(){
-    if(timer) clearInterval(timer);
-    timer = null;
-    t = 0;
-    timeEl.textContent = pad3(t);
-  }
-
-  function startTimer(){
-    if(timer) return;
-    timer = setInterval(() => {
-      t++;
-      timeEl.textContent = pad3(t);
-    }, 1000);
-  }
-
-  function setFace(sym){
-    faceEl.textContent = sym;
-  }
-
-  function updateMalletsLeft(){
-    const left = MALLETS - flags;
-    malletsLeftEl.textContent = pad3(left);
-  }
-
-  function setStatus(msg){
-    statusMsg.textContent = msg;
-  }
-
-  function buildEmpty(){
-    cells = new Array(W*H).fill(0).map((_, i) => ({
-      i,
-      x: i % W,
-      y: Math.floor(i / W),
-      mallet: false,
-      n: 0,
-      revealed: false,
-      flagged: false,
-      el: null
-    }));
-  }
-
-  function placeMalletsAvoiding(firstIndex){
-    // Place mallets after first click so first tile is never a mallet
-    const forbidden = new Set([firstIndex, ...neighbors(cells[firstIndex].x, cells[firstIndex].y)]);
-    let placed = 0;
-
-    const candidates = [];
-    for(let i=0;i<cells.length;i++){
-      if(!forbidden.has(i)) candidates.push(i);
+    function computeNumbers(){
+      for(const c of cells){
+        if(c.mallet){ c.n = -1; continue; }
+        const ns = neighbors(c.x, c.y);
+        let count = 0;
+        for(const ni of ns) if(cells[ni].mallet) count++;
+        c.n = count;
+      }
     }
 
-    // Shuffle candidates
-    for(let i=candidates.length-1;i>0;i--){
-      const j = (Math.random() * (i+1))|0;
-      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    function puckClassFor(n){
+      if(n <= 0) return null;
+      if(n <= 2) return "yellow";
+      if(n <= 4) return "red";
+      return "green";
     }
 
-    for(const i of candidates){
-      if(placed >= MALLETS) break;
-      cells[i].mallet = true;
-      placed++;
+    function computeTileSize(){
+      const rails = document.querySelector(".rails");
+      const rect = rails.getBoundingClientRect();
+
+      const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap")) || 6;
+      const gridPad = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gridPad")) || 10;
+
+      const availableW = Math.max(240, rect.width - gridPad*2);
+      const availableH = Math.max(240, window.innerHeight - 320); // HUD heuristic
+
+      const sizeByW = Math.floor((availableW - gap*(W-1)) / W);
+      const sizeByH = Math.floor((availableH - gap*(H-1)) / H);
+
+      const size = Math.max(18, Math.min(42, Math.min(sizeByW, sizeByH)));
+
+      document.documentElement.style.setProperty("--tileSize", size + "px");
+      gridEl.style.gridTemplateColumns = `repeat(${W}, var(--tileSize))`;
+      gridEl.style.gridTemplateRows = `repeat(${H}, var(--tileSize))`;
     }
 
-    // Fallback if board too small (should not happen with our presets)
-    while(placed < MALLETS){
-      const i = (Math.random() * cells.length)|0;
-      if(forbidden.has(i)) continue;
-      if(cells[i].mallet) continue;
-      cells[i].mallet = true;
-      placed++;
-    }
-  }
+    function render(){
+      gridEl.innerHTML = "";
+      computeTileSize();
 
-  function computeNumbers(){
-    for(const c of cells){
-      if(c.mallet){ c.n = -1; continue; }
-      const ns = neighbors(c.x, c.y);
-      let count = 0;
-      for(const ni of ns) if(cells[ni].mallet) count++;
-      c.n = count;
-    }
-  }
+      for(const c of cells){
+        const b = document.createElement("button");
+        b.className = "tile";
+        b.type = "button";
+        b.dataset.i = c.i;
 
-  function puckClassFor(n){
-    if(n <= 0) return null;
-    if(n <= 2) return "yellow";
-    if(n <= 4) return "red";
-    return "green";
-  }
+        b.addEventListener("pointerdown", (e) => {
+          if(gameOver) return;
+          b.setPointerCapture?.(e.pointerId);
+          b._downAt = Date.now();
+          b._downX = e.clientX;
+          b._downY = e.clientY;
+        });
 
-  function render(){
-    gridEl.innerHTML = "";
-    gridEl.style.gridTemplateColumns = `repeat(${W}, 30px)`;
-    gridEl.style.gridTemplateRows = `repeat(${H}, 30px)`;
+        b.addEventListener("pointerup", (e) => {
+          if(gameOver) return;
 
-    for(const c of cells){
-      const b = document.createElement("button");
-      b.className = "tile";
-      b.setAttribute("type","button");
-      b.setAttribute("aria-label", `Tile ${c.x+1},${c.y+1}`);
-      b.dataset.i = c.i;
+          const held = Date.now() - (b._downAt || Date.now());
+          const moved = Math.hypot(
+            (e.clientX - (b._downX||e.clientX)),
+            (e.clientY - (b._downY||e.clientY))
+          );
+          const isLongPress = (held > 420 && moved < 10);
 
-      // Left click
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        onReveal(c.i);
-      });
+          // Desktop right click flags
+          if(e.pointerType === "mouse" && e.button === 2){
+            e.preventDefault();
+            onFlag(c.i);
+            return;
+          }
 
-      // Right click flag
-      b.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        onFlag(c.i);
-      });
+          if(isLongPress){
+            onFlag(c.i);
+            return;
+          }
 
-      // Double click chord
-      b.addEventListener("dblclick", (e) => {
-        e.preventDefault();
-        onChord(c.i);
-      });
+          if(flagMode){
+            onFlag(c.i);
+          }else{
+            onReveal(c.i);
+          }
+        });
 
-      // Long press to flag (mobile)
-      let lpTimer = null;
-      b.addEventListener("touchstart", () => {
-        if(gameOver) return;
-        lpTimer = setTimeout(() => onFlag(c.i), 420);
-      }, {passive:true});
-      b.addEventListener("touchend", () => {
-        if(lpTimer) clearTimeout(lpTimer);
-        lpTimer = null;
-      }, {passive:true});
-      b.addEventListener("touchmove", () => {
-        if(lpTimer) clearTimeout(lpTimer);
-        lpTimer = null;
-      }, {passive:true});
+        b.addEventListener("contextmenu", (e) => e.preventDefault());
 
-      c.el = b;
-      gridEl.appendChild(b);
-      paintCell(c);
-    }
-  }
+        b.addEventListener("dblclick", (e) => {
+          e.preventDefault();
+          onChord(c.i);
+        });
 
-  function paintCell(c){
-    const el = c.el;
-    if(!el) return;
-
-    el.classList.toggle("revealed", c.revealed);
-    el.classList.toggle("flagged", c.flagged);
-
-    if(!c.revealed){
-      el.innerHTML = "";
-      return;
-    }
-
-    // Revealed
-    if(c.mallet){
-      el.innerHTML = `<div class="mallet" aria-hidden="true"></div>`;
-      return;
-    }
-
-    if(c.n === 0){
-      el.innerHTML = "";
-      return;
-    }
-
-    const cls = puckClassFor(c.n);
-    const num = c.n; // keep classic clarity
-    el.innerHTML = `<div class="puck ${cls}" aria-hidden="true">${num}</div>`;
-  }
-
-  function revealAllMallets(){
-    for(const c of cells){
-      if(c.mallet){
-        c.revealed = true;
+        c.el = b;
+        gridEl.appendChild(b);
         paintCell(c);
       }
     }
-  }
 
-  function endGame(win){
-    gameOver = true;
-    if(timer) clearInterval(timer);
-    timer = null;
+    function paintCell(c){
+      const el = c.el;
+      if(!el) return;
 
-    if(win){
-      setFace("B)");
-      setStatus(`Clean sweep - you found all the mallets in ${t}s`);
-      toast("PLAY PUCK - you win");
-    }else{
-      setFace("X(");
-      setStatus("Clack - you hit a mallet");
-      toast("Malleted");
-      revealAllMallets();
+      el.classList.toggle("revealed", c.revealed);
+      el.classList.toggle("flagged", c.flagged);
+
+      if(!c.revealed){
+        el.innerHTML = "";
+        return;
+      }
+
+      if(c.mallet){
+        el.innerHTML = `<div class="mallet" aria-hidden="true"></div>`;
+        return;
+      }
+
+      if(c.n === 0){
+        el.innerHTML = "";
+        return;
+      }
+
+      const cls = puckClassFor(c.n);
+      el.innerHTML = `<div class="puck ${cls}" aria-hidden="true">${c.n}</div>`;
     }
-  }
 
-  function tryWin(){
-    const safeTotal = W*H - MALLETS;
-    if(revealedCount >= safeTotal){
-      // Auto flag remaining mallets
+    function revealAllMallets(){
       for(const c of cells){
-        if(c.mallet && !c.flagged){
-          c.flagged = true;
-          flags++;
+        if(c.mallet){
+          c.revealed = true;
           paintCell(c);
         }
       }
-      updateMalletsLeft();
-      endGame(true);
-    }
-  }
-
-  function onFirstAction(i){
-    if(started) return;
-    started = true;
-    firstClickIndex = i;
-    placeMalletsAvoiding(i);
-    computeNumbers();
-    startTimer();
-  }
-
-  function onReveal(i){
-    if(gameOver) return;
-    const c = cells[i];
-    if(c.revealed || c.flagged) return;
-
-    onFirstAction(i);
-
-    if(c.mallet){
-      c.revealed = true;
-      paintCell(c);
-      endGame(false);
-      return;
     }
 
-    floodReveal(i);
-    tryWin();
-  }
+    function endGame(win){
+      gameOver = true;
+      if(timer) clearInterval(timer);
+      timer = null;
 
-  function floodReveal(i){
-    const stack = [i];
-    while(stack.length){
-      const ci = stack.pop();
-      const c = cells[ci];
-      if(c.revealed || c.flagged) continue;
-      c.revealed = true;
-      revealedCount++;
-      paintCell(c);
-
-      if(c.n === 0){
-        const ns = neighbors(c.x, c.y);
-        for(const ni of ns){
-          const ncell = cells[ni];
-          if(!ncell.revealed && !ncell.flagged && !ncell.mallet){
-            stack.push(ni);
-          }
-        }
+      if(win){
+        setFace("B)");
+        setStatus(`Clean sweep - you found all the mallets in ${t}s`);
+        toast("PLAY PUCK - you win");
+      }else{
+        setFace("X(");
+        setStatus("Clack - you hit a mallet");
+        toast("Malleted");
+        revealAllMallets();
       }
     }
-  }
 
-  function onFlag(i){
-    if(gameOver) return;
-    const c = cells[i];
-    if(c.revealed) return;
+    function tryWin(){
+      const safeTotal = W*H - MALLETS;
+      if(revealedCount >= safeTotal){
+        for(const c of cells){
+          if(c.mallet && !c.flagged){
+            c.flagged = true;
+            flags++;
+            paintCell(c);
+          }
+        }
+        updateMalletsLeft();
+        endGame(true);
+      }
+    }
 
-    if(!started){
-      // allow flagging before first reveal, classic behavior
+    function onFirstAction(i){
+      if(started) return;
       started = true;
-      firstClickIndex = i;
       placeMalletsAvoiding(i);
       computeNumbers();
       startTimer();
     }
 
-    c.flagged = !c.flagged;
-    flags += c.flagged ? 1 : -1;
-    paintCell(c);
-    updateMalletsLeft();
-    tryWin();
-  }
+    function onReveal(i){
+      if(gameOver) return;
+      const c = cells[i];
+      if(c.revealed || c.flagged) return;
 
-  function onChord(i){
-    if(gameOver) return;
-    const c = cells[i];
-    if(!c.revealed) return;
-    if(c.n <= 0) return;
+      onFirstAction(i);
 
-    const ns = neighbors(c.x, c.y);
-    let flaggedAround = 0;
-    for(const ni of ns) if(cells[ni].flagged) flaggedAround++;
-
-    if(flaggedAround !== c.n) return;
-
-    // reveal all unflagged neighbors
-    for(const ni of ns){
-      const ncell = cells[ni];
-      if(ncell.flagged || ncell.revealed) continue;
-
-      if(ncell.mallet){
-        ncell.revealed = true;
-        paintCell(ncell);
+      if(c.mallet){
+        c.revealed = true;
+        paintCell(c);
         endGame(false);
         return;
       }
-      floodReveal(ni);
+
+      floodReveal(i);
+      tryWin();
     }
-    tryWin();
-  }
 
-  function newGame(){
-    const diff = DIFFS[difficultyEl.value] || DIFFS.beginner;
-    W = diff.w; H = diff.h; MALLETS = diff.m;
+    function floodReveal(i){
+      const stack = [i];
+      while(stack.length){
+        const ci = stack.pop();
+        const c = cells[ci];
+        if(c.revealed || c.flagged) continue;
+        c.revealed = true;
+        revealedCount++;
+        paintCell(c);
 
-    started = false;
-    gameOver = false;
-    flags = 0;
-    revealedCount = 0;
-    firstClickIndex = null;
-    resetTimer();
-    setFace(":)");
-    setStatus("Left click clears. Right click flags. Long press flags on mobile.");
-
-    buildEmpty();
-    updateMalletsLeft();
-    render();
-    toast("New table ready");
-  }
-
-  // Keyboard help
-  window.addEventListener("keydown", (e) => {
-    if(e.key.toLowerCase() === "n"){
-      newGame();
+        if(c.n === 0){
+          const ns = neighbors(c.x, c.y);
+          for(const ni of ns){
+            const ncell = cells[ni];
+            if(!ncell.revealed && !ncell.flagged && !ncell.mallet){
+              stack.push(ni);
+            }
+          }
+        }
+      }
     }
-  });
 
-  newBtn.addEventListener("click", newGame);
-  difficultyEl.addEventListener("change", newGame);
+    function onFlag(i){
+      if(gameOver) return;
+      const c = cells[i];
+      if(c.revealed) return;
 
-  // Start
-  newGame();
-})();
-</script>
+      if(!started){
+        started = true;
+        placeMalletsAvoiding(i);
+        computeNumbers();
+        startTimer();
+      }
+
+      c.flagged = !c.flagged;
+      flags += c.flagged ? 1 : -1;
+      paintCell(c);
+      updateMalletsLeft();
+      tryWin();
+    }
+
+    function onChord(i){
+      if(gameOver) return;
+      const c = cells[i];
+      if(!c.revealed) return;
+      if(c.n <= 0) return;
+
+      const ns = neighbors(c.x, c.y);
+      let flaggedAround = 0;
+      for(const ni of ns) if(cells[ni].flagged) flaggedAround++;
+
+      if(flaggedAround !== c.n) return;
+
+      for(const ni of ns){
+        const ncell = cells[ni];
+        if(ncell.flagged || ncell.revealed) continue;
+
+        if(ncell.mallet){
+          ncell.revealed = true;
+          paintCell(ncell);
+          endGame(false);
+          return;
+        }
+        floodReveal(ni);
+      }
+      tryWin();
+    }
+
+    function setFlagMode(on){
+      flagMode = !!on;
+      flagBtn.classList.toggle("flag-on", flagMode);
+      flagState.textContent = flagMode ? "ON" : "OFF";
+      setStatus(flagMode
+        ? "FLAG mode: tap pucks to mark mallets. Tap FLAG to go back."
+        : "Tap to clear. Use FLAG for mallets. Double tap a revealed puck to chord."
+      );
+      toast(flagMode ? "Flag mode ON" : "Flag mode OFF");
+    }
+
+    function newGame(){
+      const diff = DIFFS[difficultyEl.value] || DIFFS.beginner;
+      W = diff.w; H = diff.h; MALLETS = diff.m;
+
+      started = false;
+      gameOver = false;
+      flags = 0;
+      revealedCount = 0;
+
+      resetTimer();
+      setFace(":)");
+      setFlagMode(false);
+
+      buildEmpty();
+      updateMalletsLeft();
+      render();
+      toast("New table ready");
+    }
+
+    newBtn.addEventListener("click", newGame);
+    difficultyEl.addEventListener("change", newGame);
+    flagBtn.addEventListener("click", () => setFlagMode(!flagMode));
+
+    window.addEventListener("resize", () => computeTileSize());
+    window.addEventListener("orientationchange", () => setTimeout(computeTileSize, 50));
+
+    newGame();
+  })();
+  </script>
 </body>
 </html>
