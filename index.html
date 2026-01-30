@@ -4,7 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>PuckSweeper</title>
+
+  <!-- PWA -->
   <meta name="theme-color" content="#0b3ea8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.png" sizes="192x192" />
+  <link rel="icon" href="icon-512.png" sizes="512x512" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
   <style>
     :root{
       --bg:#07142d;
@@ -25,7 +34,6 @@
       --shadow: rgba(0,0,0,.35);
       --px: 2px;
 
-      /* responsive sizing knobs */
       --gap: 6px;
       --gridPad: 10px;
       --tileSize: 30px; /* JS will override */
@@ -58,26 +66,35 @@
     .topbar{
       display:flex;
       flex-wrap:wrap;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
       gap:10px;
     }
 
     .title{
       display:flex;
-      align-items:baseline;
+      align-items:center;
       gap:10px;
+      min-width: 220px;
     }
-    .title h1{
-      margin:0;
-      font-size:22px;
-      letter-spacing:1px;
-      text-shadow: 0 2px 0 rgba(0,0,0,.35);
+
+    .logo{
+      height: 56px;
+      width: auto;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
     }
+
     .title .tag{
       font-size:12px;
       color: var(--muted);
       opacity:.95;
+      line-height: 1.1;
+    }
+
+    @media (max-width: 520px){
+      .logo{ height: 40px; }
     }
 
     .panel{
@@ -144,6 +161,7 @@
       gap:8px;
       font-weight:700;
       letter-spacing:1px;
+      white-space: nowrap;
     }
     .btn small{
       font-weight:400;
@@ -226,28 +244,6 @@
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
     }
 
-.title{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.logo{
-  height: 144px;
-  width: auto;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
-}
-
-@media (max-width: 520px){
-  .logo{ height: 36px; }
-}
-
-    .topbar{
-  align-items:flex-start;
-}
-    
     .puck{
       width: calc(var(--tileSize) * 0.74);
       height: calc(var(--tileSize) * 0.74);
@@ -349,12 +345,69 @@
       color: var(--text);
       max-width: min(640px, calc(100% - 24px));
       display:none;
+      z-index: 40;
     }
     .toast.show{ display:block; }
 
     @media (max-width: 520px){
       .meter{ min-width: 140px; }
-      .title h1{ font-size: 20px; }
+    }
+
+    /* Share modal */
+    .modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 50;
+    }
+    .modal.show{ display:flex; }
+
+    .modal-card{
+      width: min(520px, 100%);
+      background: rgba(10,16,30,.95);
+      border: var(--px) solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 14px;
+      text-align:center;
+    }
+    .modal-card h2{
+      margin: 4px 0 10px;
+      font-size: 16px;
+      letter-spacing:1px;
+    }
+    .qr-wrap{
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      display:inline-block;
+      border: var(--px) solid rgba(0,0,0,.18);
+      box-shadow: 0 8px 26px rgba(0,0,0,.25);
+    }
+    .qr{
+      width: min(320px, 70vw);
+      height: auto;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      display:block;
+    }
+    .share-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:center;
+      margin-top: 12px;
+    }
+    .share-url{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      word-break: break-all;
+      opacity:.95;
     }
   </style>
 </head>
@@ -362,9 +415,9 @@
   <div class="wrap">
     <div class="topbar">
       <div class="title">
-  <img class="logo" src="logo.png" alt="PuckSweeper" />
-  <div class="tag">8bit air hockey minesweeper</div>
-</div>
+        <img class="logo" src="logo.png" alt="PuckSweeper" />
+        <div class="tag">8bit air hockey minesweeper</div>
+      </div>
       <div class="msg" id="statusMsg">Tap to clear. Use FLAG for mallets. Double tap a revealed puck to chord.</div>
     </div>
 
@@ -391,6 +444,11 @@
             <option value="intermediate">Tournament Table (16x16, 40 mallets)</option>
             <option value="expert">Worlds Table (30x16, 99 mallets)</option>
           </select>
+
+          <button class="btn" id="shareBtn" title="Share (QR code)">
+            SHARE
+            <small>QR</small>
+          </button>
 
           <button class="btn" id="flagBtn" title="Toggle flag mode">
             FLAG
@@ -426,6 +484,25 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- Share modal -->
+  <div class="modal" id="shareModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Share PuckSweeper">
+      <h2>SCAN TO PLAY</h2>
+      <div class="qr-wrap">
+        <!-- Put pucksweeper_qr.png in repo root -->
+        <img class="qr" src="pucksweeper_qr.png" alt="QR code to PuckSweeper" />
+      </div>
+
+      <div class="share-row">
+        <button class="btn" id="nativeShareBtn" title="Native share (if supported)">SHARE LINK</button>
+        <button class="btn" id="copyLinkBtn" title="Copy link">COPY</button>
+        <button class="btn" id="closeShareBtn" title="Close">CLOSE</button>
+      </div>
+
+      <div class="share-url" id="shareUrlText">https://petesimple.github.io/pucksweeper/</div>
+    </div>
+  </div>
+
   <script>
   (() => {
     const gridEl = document.getElementById("grid");
@@ -439,6 +516,17 @@
 
     const flagBtn = document.getElementById("flagBtn");
     const flagState = document.getElementById("flagState");
+
+    // Share UI
+    const shareBtn = document.getElementById("shareBtn");
+    const shareModal = document.getElementById("shareModal");
+    const closeShareBtn = document.getElementById("closeShareBtn");
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
+    const nativeShareBtn = document.getElementById("nativeShareBtn");
+    const shareUrlText = document.getElementById("shareUrlText");
+
+    const SHARE_URL = "https://petesimple.github.io/pucksweeper/";
+    shareUrlText.textContent = SHARE_URL;
 
     const DIFFS = {
       beginner: { w: 9, h: 9, m: 10 },
@@ -466,6 +554,15 @@
       toastEl.classList.add("show");
       clearTimeout(toastEl._t);
       toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 1500);
+    }
+
+    function openShare(){
+      shareModal.classList.add("show");
+      shareModal.setAttribute("aria-hidden","false");
+    }
+    function closeShare(){
+      shareModal.classList.remove("show");
+      shareModal.setAttribute("aria-hidden","true");
     }
 
     function idx(x,y){ return y*W + x; }
@@ -578,7 +675,7 @@
       const gridPad = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gridPad")) || 10;
 
       const availableW = Math.max(240, rect.width - gridPad*2);
-      const availableH = Math.max(240, window.innerHeight - 320); // HUD heuristic
+      const availableH = Math.max(240, window.innerHeight - 340); // slightly more room (share button added)
 
       const sizeByW = Math.floor((availableW - gap*(W-1)) / W);
       const sizeByH = Math.floor((availableH - gap*(H-1)) / H);
@@ -618,7 +715,6 @@
           );
           const isLongPress = (held > 420 && moved < 10);
 
-          // Desktop right click flags
           if(e.pointerType === "mouse" && e.button === 2){
             e.preventDefault();
             onFlag(c.i);
@@ -841,6 +937,50 @@
       toast("New table ready");
     }
 
+    // Share events
+    shareBtn.addEventListener("click", openShare);
+    closeShareBtn.addEventListener("click", closeShare);
+    shareModal.addEventListener("click", (e) => {
+      if(e.target === shareModal) closeShare();
+    });
+    window.addEventListener("keydown", (e) => {
+      if(e.key === "Escape") closeShare();
+    });
+
+    copyLinkBtn.addEventListener("click", async () => {
+      try{
+        await navigator.clipboard.writeText(SHARE_URL);
+        toast("Copied link");
+      }catch{
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = SHARE_URL;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+        toast("Copied link");
+      }
+    });
+
+    nativeShareBtn.addEventListener("click", async () => {
+      if(navigator.share){
+        try{
+          await navigator.share({ title: "PuckSweeper", text: "Play PuckSweeper", url: SHARE_URL });
+        }catch{}
+      }else{
+        toast("Native share not supported here");
+      }
+    });
+
+    // PWA service worker
+    if("serviceWorker" in navigator){
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+
+    // Game events
     newBtn.addEventListener("click", newGame);
     difficultyEl.addEventListener("change", newGame);
     flagBtn.addEventListener("click", () => setFlagMode(!flagMode));
