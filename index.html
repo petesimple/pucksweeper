@@ -367,13 +367,15 @@
     .modal.show{ display:flex; }
 
     .modal-card{
-      width: min(520px, 100%);
+      width: min(560px, 100%);
       background: rgba(10,16,30,.95);
       border: var(--px) solid rgba(255,255,255,.14);
       border-radius: 14px;
       box-shadow: 0 18px 60px rgba(0,0,0,.55);
       padding: 14px;
       text-align:center;
+      max-height: calc(100vh - 36px);
+      overflow:auto;
     }
     .modal-card h2{
       margin: 4px 0 10px;
@@ -408,6 +410,41 @@
       color: var(--muted);
       word-break: break-all;
       opacity:.95;
+    }
+
+    /* HowTo content */
+    .howto{
+      text-align:left;
+      background: rgba(255,255,255,.04);
+      border: var(--px) solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .howto h3{
+      margin: 10px 0 6px;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+    .howto p, .howto li{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .howto ul{
+      margin: 6px 0 10px 18px;
+      padding: 0;
+    }
+    .kbd{
+      display:inline-block;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: rgba(0,0,0,.25);
+      border: var(--px) solid rgba(255,255,255,.10);
+      color: var(--text);
+      font-size: 11px;
+      letter-spacing: .5px;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -444,6 +481,11 @@
             <option value="intermediate">Tournament Table (16x16, 40 mallets)</option>
             <option value="expert">Worlds Table (30x16, 99 mallets)</option>
           </select>
+
+          <button class="btn" id="howtoBtn" title="How to play">
+            HOWTO
+            <small>PLAY</small>
+          </button>
 
           <button class="btn" id="shareBtn" title="Share (QR code)">
             SHARE
@@ -489,7 +531,6 @@
     <div class="modal-card" role="dialog" aria-modal="true" aria-label="Share PuckSweeper">
       <h2>SCAN TO PLAY</h2>
       <div class="qr-wrap">
-        <!-- Put pucksweeper_qr.png in repo root -->
         <img class="qr" src="pucksweeper_qr.png" alt="QR code to PuckSweeper" />
       </div>
 
@@ -500,6 +541,52 @@
       </div>
 
       <div class="share-url" id="shareUrlText">https://petesimple.github.io/pucksweeper/</div>
+    </div>
+  </div>
+
+  <!-- Howto modal -->
+  <div class="modal" id="howtoModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="How to play PuckSweeper">
+      <h2>HOW TO PLAY</h2>
+
+      <div class="howto">
+        <h3>Goal</h3>
+        <p>Clear every tile that is not a mallet. Numbers tell you how many mallets touch that tile (8 directions).</p>
+
+        <h3>Controls</h3>
+        <ul>
+          <li><strong>Tap</strong> a tile to clear it.</li>
+          <li><strong>FLAG</strong> mode: tap to mark suspected mallets.</li>
+          <li><strong>Mobile</strong>: long press a tile to flag it.</li>
+          <li><strong>Desktop</strong>: right click a tile to flag it.</li>
+          <li><strong>Chord</strong>: double click or double tap a revealed numbered tile to clear its neighbors
+            <em>only when</em> the number of flags around it matches the number.</li>
+        </ul>
+
+        <h3>Reading the pucks</h3>
+        <ul>
+          <li><span class="kbd">Yellow</span> numbers are 1 to 2</li>
+          <li><span class="kbd">Red</span> numbers are 3 to 4</li>
+          <li><span class="kbd">Neon</span> numbers are 5 to 8</li>
+        </ul>
+
+        <h3>Strategy</h3>
+        <ul>
+          <li><strong>Start from edges</strong>: corners and borders have fewer neighbors, so the math is cleaner.</li>
+          <li><strong>Flag with purpose</strong>: only flag when you are sure. Too many flags slows you down and breaks chording.</li>
+          <li><strong>Use “one left” patterns</strong>: if a 1 touches only one hidden tile, that tile is a mallet. Same idea for any number.</li>
+          <li><strong>Think in overlaps</strong>: compare two nearby numbers. If one’s hidden neighbors are a subset of the other, you can deduce safe tiles.</li>
+          <li><strong>Chord to go fast</strong>: once you are confident, chording clears big areas safely and saves time.</li>
+          <li><strong>When guessing is unavoidable</strong>: pick the tile with the most information around it, not a random one in the dark.</li>
+        </ul>
+
+        <h3>Pro tip</h3>
+        <p>If you hit a mallet, it’s not your fault. The table was clearly tilted. Play puck.</p>
+      </div>
+
+      <div class="share-row">
+        <button class="btn" id="closeHowtoBtn" title="Close">CLOSE</button>
+      </div>
     </div>
   </div>
 
@@ -524,6 +611,11 @@
     const copyLinkBtn = document.getElementById("copyLinkBtn");
     const nativeShareBtn = document.getElementById("nativeShareBtn");
     const shareUrlText = document.getElementById("shareUrlText");
+
+    // Howto UI
+    const howtoBtn = document.getElementById("howtoBtn");
+    const howtoModal = document.getElementById("howtoModal");
+    const closeHowtoBtn = document.getElementById("closeHowtoBtn");
 
     const SHARE_URL = "https://petesimple.github.io/pucksweeper/";
     shareUrlText.textContent = SHARE_URL;
@@ -556,13 +648,16 @@
       toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 1500);
     }
 
-    function openShare(){
-      shareModal.classList.add("show");
-      shareModal.setAttribute("aria-hidden","false");
+    function openModal(modal){
+      modal.classList.add("show");
+      modal.setAttribute("aria-hidden","false");
     }
-    function closeShare(){
-      shareModal.classList.remove("show");
-      shareModal.setAttribute("aria-hidden","true");
+    function closeModal(modal){
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden","true");
+    }
+    function isOpen(modal){
+      return modal.classList.contains("show");
     }
 
     function idx(x,y){ return y*W + x; }
@@ -675,7 +770,7 @@
       const gridPad = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gridPad")) || 10;
 
       const availableW = Math.max(240, rect.width - gridPad*2);
-      const availableH = Math.max(240, window.innerHeight - 340); // slightly more room (share button added)
+      const availableH = Math.max(240, window.innerHeight - 340);
 
       const sizeByW = Math.floor((availableW - gap*(W-1)) / W);
       const sizeByH = Math.floor((availableH - gap*(H-1)) / H);
@@ -937,14 +1032,11 @@
       toast("New table ready");
     }
 
-    // Share events
-    shareBtn.addEventListener("click", openShare);
-    closeShareBtn.addEventListener("click", closeShare);
+    // Share modal events
+    shareBtn.addEventListener("click", () => openModal(shareModal));
+    closeShareBtn.addEventListener("click", () => closeModal(shareModal));
     shareModal.addEventListener("click", (e) => {
-      if(e.target === shareModal) closeShare();
-    });
-    window.addEventListener("keydown", (e) => {
-      if(e.key === "Escape") closeShare();
+      if(e.target === shareModal) closeModal(shareModal);
     });
 
     copyLinkBtn.addEventListener("click", async () => {
@@ -952,7 +1044,6 @@
         await navigator.clipboard.writeText(SHARE_URL);
         toast("Copied link");
       }catch{
-        // fallback
         const ta = document.createElement("textarea");
         ta.value = SHARE_URL;
         document.body.appendChild(ta);
@@ -971,6 +1062,20 @@
       }else{
         toast("Native share not supported here");
       }
+    });
+
+    // Howto modal events
+    howtoBtn.addEventListener("click", () => openModal(howtoModal));
+    closeHowtoBtn.addEventListener("click", () => closeModal(howtoModal));
+    howtoModal.addEventListener("click", (e) => {
+      if(e.target === howtoModal) closeModal(howtoModal);
+    });
+
+    // Esc closes whichever modal is open
+    window.addEventListener("keydown", (e) => {
+      if(e.key !== "Escape") return;
+      if(isOpen(shareModal)) closeModal(shareModal);
+      if(isOpen(howtoModal)) closeModal(howtoModal);
     });
 
     // PWA service worker
