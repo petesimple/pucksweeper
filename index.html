@@ -226,6 +226,28 @@
       text-shadow: 0 2px 0 rgba(0,0,0,.35);
     }
 
+.title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.logo{
+  height: 44px;
+  width: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+}
+
+@media (max-width: 520px){
+  .logo{ height: 36px; }
+}
+
+    .topbar{
+  align-items:flex-start;
+}
+    
     .puck{
       width: calc(var(--tileSize) * 0.74);
       height: calc(var(--tileSize) * 0.74);
@@ -340,9 +362,9 @@
   <div class="wrap">
     <div class="topbar">
       <div class="title">
-        <h1>PUCKSWEEPER</h1>
-        <div class="tag">8bit air hockey minesweeper</div>
-      </div>
+  <img class="logo" src="logo.png" alt="PuckSweeper" />
+  <div class="tag">8bit air hockey minesweeper</div>
+</div>
       <div class="msg" id="statusMsg">Tap to clear. Use FLAG for mallets. Double tap a revealed puck to chord.</div>
     </div>
 
